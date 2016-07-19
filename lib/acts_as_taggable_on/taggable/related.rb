@@ -36,27 +36,32 @@ module ActsAsTaggableOn::Taggable
     end
 
     def matching_contexts_for(search_context, result_context, klass, options = {})
+      p_key = 'id' || klass.primary_key
       tags_to_find = tags_on(search_context).map { |t| t.name }
-      related_where(klass, ["#{exclude_self(klass, id)} #{klass.table_name}.#{klass.primary_key} = #{ActsAsTaggableOn::Tagging.table_name}.taggable_id AND #{ActsAsTaggableOn::Tagging.table_name}.taggable_type = '#{klass.base_class}' AND #{ActsAsTaggableOn::Tagging.table_name}.tag_id = #{ActsAsTaggableOn::Tag.table_name}.#{ActsAsTaggableOn::Tag.primary_key} AND #{ActsAsTaggableOn::Tag.table_name}.name IN (?) AND #{ActsAsTaggableOn::Tagging.table_name}.context = ?", tags_to_find, result_context])
+      related_where(klass, ["#{exclude_self(klass, id)} #{klass.table_name}.#{p_key} = #{ActsAsTaggableOn::Tagging.table_name}.taggable_id AND #{ActsAsTaggableOn::Tagging.table_name}.taggable_type = '#{klass.base_class}' AND #{ActsAsTaggableOn::Tagging.table_name}.tag_id = #{ActsAsTaggableOn::Tag.table_name}.#{ActsAsTaggableOn::Tag.primary_key} AND #{ActsAsTaggableOn::Tag.table_name}.name IN (?) AND #{ActsAsTaggableOn::Tagging.table_name}.context = ?", tags_to_find, result_context])
     end
 
     def related_tags_for(context, klass, options = {})
+      p_key = 'id' || klass.primary_key
       tags_to_ignore = Array.wrap(options[:ignore]).map(&:to_s) || []
       tags_to_find = tags_on(context).map { |t| t.name }.reject { |t| tags_to_ignore.include? t }
-      related_where(klass, ["#{exclude_self(klass, id)} #{klass.table_name}.#{klass.primary_key} = #{ActsAsTaggableOn::Tagging.table_name}.taggable_id AND #{ActsAsTaggableOn::Tagging.table_name}.taggable_type = '#{klass.base_class}' AND #{ActsAsTaggableOn::Tagging.table_name}.tag_id = #{ActsAsTaggableOn::Tag.table_name}.#{ActsAsTaggableOn::Tag.primary_key} AND #{ActsAsTaggableOn::Tag.table_name}.name IN (?) AND #{ActsAsTaggableOn::Tagging.table_name}.context = ?", tags_to_find, context])
+      related_where(klass, ["#{exclude_self(klass, id)} #{klass.table_name}.#{p_key} = #{ActsAsTaggableOn::Tagging.table_name}.taggable_id AND #{ActsAsTaggableOn::Tagging.table_name}.taggable_type = '#{klass.base_class}' AND #{ActsAsTaggableOn::Tagging.table_name}.tag_id = #{ActsAsTaggableOn::Tag.table_name}.#{ActsAsTaggableOn::Tag.primary_key} AND #{ActsAsTaggableOn::Tag.table_name}.name IN (?) AND #{ActsAsTaggableOn::Tagging.table_name}.context = ?", tags_to_find, context])
     end
 
     private
 
     def exclude_self(klass, id)
-      "#{klass.table_name}.#{klass.primary_key} != #{id} AND" if [self.class.base_class, self.class].include? klass
+      puts "exclude_self: #{klass} #{id}, #{self[:id]}"
+      p_key = 'id' || klass.primary_key
+      "#{klass.table_name}.#{p_key} != #{id} AND" if [self.class.base_class, self.class].include? klass
     end
 
     def group_columns(klass)
+      p_key = 'id' || klass.primary_key
       if ActsAsTaggableOn::Utils.using_postgresql?
         grouped_column_names_for(klass)
       else
-        "#{klass.table_name}.#{klass.primary_key}"
+        "#{klass.table_name}.#{p_key}"
       end
     end
 

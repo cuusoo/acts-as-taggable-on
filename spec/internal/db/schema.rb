@@ -74,6 +74,11 @@ ActiveRecord::Schema.define version: 0 do
     t.column :type, :string
   end
 
+  create_table :other_pk_models, force: true do |t|
+    t.column :name, :string
+    t.column :uuid, :string
+  end
+
 
   # Special cases for postgresql
   if using_postgresql?

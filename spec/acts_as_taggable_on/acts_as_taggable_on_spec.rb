@@ -273,4 +273,21 @@ describe 'Acts As Taggable On' do
     end
   end
 
+  describe 'other primary key model' do
+    before do
+      @opk = OtherPkModel.create(name: 'foo')
+    end
+
+    it 'should be correct taggings' do
+      id = @opk[:id]
+      puts "opk.id=#{id}, #{@opk[:id]}, #{@opk.id}, #{@opk.uuid}"
+      @opk.keyword_list = ['tag1', 'tag2']
+      @opk.save
+      @opk.reload
+      @opk.taggings.each do |t|
+        puts "taggable.id = #{t.taggable_id}, #{@opk.as_json}"
+        expect(t.taggable_id).to eq(id)
+      end
+    end
+  end
 end

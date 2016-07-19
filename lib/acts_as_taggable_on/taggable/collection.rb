@@ -70,7 +70,8 @@ module ActsAsTaggableOn::Taggable
         group_columns = "#{ActsAsTaggableOn::Tagging.table_name}.tag_id"
 
         # Append the current scope to the scope, because we can't use scope(:find) in RoR 3.0 anymore:
-        tagging_scope = generate_tagging_scope_in_clause(tagging_scope, table_name, primary_key).group(group_columns)
+        p_key = 'id' || primary_key
+        tagging_scope = generate_tagging_scope_in_clause(tagging_scope, table_name, p_key).group(group_columns)
 
         tag_scope_joins(tag_scope, tagging_scope)
       end
@@ -88,6 +89,7 @@ module ActsAsTaggableOn::Taggable
       #                       * :at_most    - Exclude tags with a frequency greater than the given value
       #                       * :on         - Scope the find to only include a certain context
       def all_tag_counts(options = {})
+        p_key = 'id' || primary_key
         options = options.dup
         options.assert_valid_keys :start_at, :end_at, :conditions, :at_least, :at_most, :order, :limit, :on, :id
 
@@ -95,7 +97,7 @@ module ActsAsTaggableOn::Taggable
         options[:conditions] = sanitize_sql(options[:conditions]) if options[:conditions]
 
         ## Generate joins:
-        taggable_join = "INNER JOIN #{table_name} ON #{table_name}.#{primary_key} = #{ActsAsTaggableOn::Tagging.table_name}.taggable_id"
+        taggable_join = "INNER JOIN #{table_name} ON #{table_name}.#{p_key} = #{ActsAsTaggableOn::Tagging.table_name}.taggable_id"
         taggable_join << " AND #{table_name}.#{inheritance_column} = '#{name}'" unless descends_from_active_record? # Current model is STI descendant, so add type checking to the join condition
 
         ## Generate scope:
@@ -117,7 +119,7 @@ module ActsAsTaggableOn::Taggable
 
         unless options[:id]
           # Append the current scope to the scope, because we can't use scope(:find) in RoR 3.0 anymore:
-          tagging_scope = generate_tagging_scope_in_clause(tagging_scope, table_name, primary_key)
+          tagging_scope = generate_tagging_scope_in_clause(tagging_scope, table_name, p_key)
         end
 
         tagging_scope = tagging_scope.group(group_columns).having(having)

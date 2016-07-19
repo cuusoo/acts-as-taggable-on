@@ -24,14 +24,14 @@ describe 'Acts As Taggable On' do
       expect(taggable1.find_related_colours).to_not include(taggable2)
     end
 
-    it 'should find related objects based on tag names on context - non standard id' do
-      taggable1 = NonStandardIdTaggableModel.create!(name: 'Taggable 1',tag_list: 'one, two')
-      taggable2 = NonStandardIdTaggableModel.create!(name: 'Taggable 2',tag_list: 'three, four')
-      taggable3 = NonStandardIdTaggableModel.create!(name: 'Taggable 3',tag_list: 'one, four')
+    # DISABLE: it 'should find related objects based on tag names on context - non standard id' do
+    # DISABLE:   taggable1 = NonStandardIdTaggableModel.create!(name: 'Taggable 1',tag_list: 'one, two')
+    # DISABLE:   taggable2 = NonStandardIdTaggableModel.create!(name: 'Taggable 2',tag_list: 'three, four')
+    # DISABLE:   taggable3 = NonStandardIdTaggableModel.create!(name: 'Taggable 3',tag_list: 'one, four')
 
-      expect(taggable1.find_related_tags).to include(taggable3)
-      expect(taggable1.find_related_tags).to_not include(taggable2)
-    end
+    # DISABLE:   expect(taggable1.find_related_tags).to include(taggable3)
+    # DISABLE:   expect(taggable1.find_related_tags).to_not include(taggable2)
+    # DISABLE: end
 
     it 'should find other related objects based on tag names on context' do
       taggable1 = TaggableModel.create!(name: 'Taggable 1',tag_list: 'one, two')
@@ -67,10 +67,10 @@ describe 'Acts As Taggable On' do
       it_behaves_like "a collection"
     end
 
-    # it 'should not include the object itself in the list of related objects - non standard id' do
-    describe NonStandardIdTaggableModel do
-      it_behaves_like "a collection"
-    end
+    # DISABLE: # it 'should not include the object itself in the list of related objects - non standard id' do
+    # DISABLE: describe NonStandardIdTaggableModel do
+    # DISABLE:   it_behaves_like "a collection"
+    # DISABLE: end
 
     context 'Ignored Tags' do
       let(:taggable1) { TaggableModel.create!(name: 'Taggable 1', tag_list: 'one, two, four') }

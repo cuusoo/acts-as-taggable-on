@@ -33,7 +33,7 @@ module ActsAsTaggableOn::Taggable
       else
         scope = base_tags.where([%(#{ActsAsTaggableOn::Tagging.table_name}.context = ? AND
                                     #{ActsAsTaggableOn::Tagging.table_name}.tagger_id = ? AND
-                                    #{ActsAsTaggableOn::Tagging.table_name}.tagger_type = ?), context.to_s, owner.id, owner.class.base_class.to_s])
+                                    #{ActsAsTaggableOn::Tagging.table_name}.tagger_type = ?), context.to_s, owner[:id], owner.class.base_class.to_s])
       end
 
       # when preserving tag order, return tags in created order
@@ -108,13 +108,14 @@ module ActsAsTaggableOn::Taggable
 
           # Find all taggings that belong to the taggable (self), are owned by the owner,
           # have the correct context, and are removed from the list.
-          ActsAsTaggableOn::Tagging.destroy_all(taggable_id: id, taggable_type: self.class.base_class.to_s,
-                                                            tagger_type: owner.class.base_class.to_s, tagger_id: owner.id,
+          ActsAsTaggableOn::Tagging.destroy_all(taggable_id: self[:id], taggable_type: self.class.base_class.to_s,
+                                                            tagger_type: owner.class.base_class.to_s, tagger_id: owner[:id],
                                                             tag_id: old_tags, context: context) if old_tags.present?
 
           # Create new taggings:
           new_tags.each do |tag|
-            taggings.create!(tag_id: tag.id, context: context.to_s, tagger: owner, taggable: self)
+            #taggings.create!(tag_id: tag[:id], context: context.to_s, tagger: owner, taggable: self)
+            taggings.create!(tag_id: tag[:id], context: context.to_s, tagger: owner, taggable_id: self[:id], taggable_type: self.class)
           end
         end
       end

@@ -85,6 +85,7 @@ module ActsAsTaggableOn::Taggable
       #   User.tagged_with(["awesome", "cool"], :owned_by => foo ) # Users that are tagged with just awesome and cool by 'foo'
       #   User.tagged_with(["awesome", "cool"], :owned_by => foo, :start_at => Date.today ) # Users that are tagged with just awesome, cool by 'foo' and starting today
       def tagged_with(tags, options = {})
+        p_key = 'id' || primary_key
         tag_list = ActsAsTaggableOn.default_parser.new(tags).parse
         options = options.dup
         empty_result = where('1 = 0')
@@ -110,11 +111,11 @@ module ActsAsTaggableOn::Taggable
             tags_conditions = tag_list.map { |t| sanitize_sql(["#{ActsAsTaggableOn::Tag.table_name}.name #{ActsAsTaggableOn::Utils.like_operator} ?", t]) }.join(' OR ')
           end
 
-          conditions << "#{table_name}.#{primary_key} NOT IN (SELECT #{ActsAsTaggableOn::Tagging.table_name}.taggable_id FROM #{ActsAsTaggableOn::Tagging.table_name} JOIN #{ActsAsTaggableOn::Tag.table_name} ON #{ActsAsTaggableOn::Tagging.table_name}.tag_id = #{ActsAsTaggableOn::Tag.table_name}.#{ActsAsTaggableOn::Tag.primary_key} AND (#{tags_conditions}) WHERE #{ActsAsTaggableOn::Tagging.table_name}.taggable_type = #{quote_value(base_class.name, nil)})"
+          conditions << "#{table_name}.#{p_key} NOT IN (SELECT #{ActsAsTaggableOn::Tagging.table_name}.taggable_id FROM #{ActsAsTaggableOn::Tagging.table_name} JOIN #{ActsAsTaggableOn::Tag.table_name} ON #{ActsAsTaggableOn::Tagging.table_name}.tag_id = #{ActsAsTaggableOn::Tag.table_name}.#{ActsAsTaggableOn::Tag.primary_key} AND (#{tags_conditions}) WHERE #{ActsAsTaggableOn::Tagging.table_name}.taggable_type = #{quote_value(base_class.name, nil)})"
 
           if owned_by
             joins <<  "JOIN #{ActsAsTaggableOn::Tagging.table_name}" +
-                      "  ON #{ActsAsTaggableOn::Tagging.table_name}.taggable_id = #{quote}#{table_name}#{quote}.#{primary_key}" +
+                      "  ON #{ActsAsTaggableOn::Tagging.table_name}.taggable_id = #{quote}#{table_name}#{quote}.#{p_key}" +
                       " AND #{ActsAsTaggableOn::Tagging.table_name}.taggable_type = #{quote_value(base_class.name, nil)}" +
                       " AND #{ActsAsTaggableOn::Tagging.table_name}.tagger_id = #{quote_value(owned_by.id, nil)}" +
                       " AND #{ActsAsTaggableOn::Tagging.table_name}.tagger_type = #{quote_value(owned_by.class.base_class.to_s, nil)}"
@@ -142,7 +143,7 @@ module ActsAsTaggableOn::Taggable
           )
 
           tagging_cond = "#{ActsAsTaggableOn::Tagging.table_name} #{taggings_alias}" +
-                          " WHERE #{taggings_alias}.taggable_id = #{quote}#{table_name}#{quote}.#{primary_key}" +
+                          " WHERE #{taggings_alias}.taggable_id = #{quote}#{table_name}#{quote}.#{p_key}" +
                           " AND #{taggings_alias}.taggable_type = #{quote_value(base_class.name, nil)}"
 
           tagging_cond << " AND " + sanitize_sql(["#{taggings_alias}.created_at >= ?", options.delete(:start_at)]) if options[:start_at]
@@ -176,7 +177,7 @@ module ActsAsTaggableOn::Taggable
           tags.each do |tag|
             taggings_alias = adjust_taggings_alias("#{alias_base_name[0..11]}_taggings_#{ActsAsTaggableOn::Utils.sha_prefix(tag.name)}")
             tagging_join = "JOIN #{ActsAsTaggableOn::Tagging.table_name} #{taggings_alias}" \
-                "  ON #{taggings_alias}.taggable_id = #{quote}#{table_name}#{quote}.#{primary_key}" +
+                "  ON #{taggings_alias}.taggable_id = #{quote}#{table_name}#{quote}.#{p_key}" +
                 " AND #{taggings_alias}.taggable_type = #{quote_value(base_class.name, nil)}" +
                 " AND #{taggings_alias}.tag_id = #{quote_value(tag.id, nil)}"
 
@@ -201,21 +202,21 @@ module ActsAsTaggableOn::Taggable
         group ||= [] # Rails interprets this as a no-op in the group() call below
         if options.delete(:order_by_matching_tag_count)
           select_clause << "#{table_name}.*, COUNT(#{taggings_alias}.tag_id) AS #{taggings_alias}_count"
-          group_columns = ActsAsTaggableOn::Utils.using_postgresql? ? grouped_column_names_for(self) : "#{table_name}.#{primary_key}"
+          group_columns = ActsAsTaggableOn::Utils.using_postgresql? ? grouped_column_names_for(self) : "#{table_name}.#{p_key}"
           group = group_columns
           order_by << "#{taggings_alias}_count DESC"
 
         elsif options.delete(:match_all)
           taggings_alias, _ = adjust_taggings_alias("#{alias_base_name}_taggings_group"), "#{alias_base_name}_tags_group"
           joins << "LEFT OUTER JOIN #{ActsAsTaggableOn::Tagging.table_name} #{taggings_alias}" \
-              "  ON #{taggings_alias}.taggable_id = #{quote}#{table_name}#{quote}.#{primary_key}" \
+              "  ON #{taggings_alias}.taggable_id = #{quote}#{table_name}#{quote}.#{p_key}" \
               " AND #{taggings_alias}.taggable_type = #{quote_value(base_class.name, nil)}"
 
           joins << " AND " + sanitize_sql(["#{taggings_alias}.context = ?", context.to_s]) if context
           joins << " AND " + sanitize_sql(["#{ActsAsTaggableOn::Tagging.table_name}.created_at >= ?", options.delete(:start_at)]) if options[:start_at]
           joins << " AND " + sanitize_sql(["#{ActsAsTaggableOn::Tagging.table_name}.created_at <= ?", options.delete(:end_at)])   if options[:end_at]
 
-          group_columns = ActsAsTaggableOn::Utils.using_postgresql? ? grouped_column_names_for(self) : "#{table_name}.#{primary_key}"
+          group_columns = ActsAsTaggableOn::Utils.using_postgresql? ? grouped_column_names_for(self) : "#{table_name}.#{p_key}"
           group = group_columns
           having = "COUNT(#{taggings_alias}.taggable_id) = #{tags.size}"
         end
