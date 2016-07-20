@@ -77,6 +77,15 @@ class OrderedTaggableModel < ActiveRecord::Base
   acts_as_ordered_taggable_on :colours
 end
 
+class OtherPkModel < ActiveRecord::Base
+  self.primary_key = 'uuid'
+  #attr_accessible :uuid
+  acts_as_taggable_on :keywords
+  before_create do
+    self.uuid = SecureRandom.uuid.gsub('-', '')
+  end
+end
+
 if using_postgresql?
   class CachedModelWithArray < ActiveRecord::Base
     acts_as_taggable

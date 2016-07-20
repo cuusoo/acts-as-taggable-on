@@ -11,11 +11,16 @@ ActiveRecord::Schema.define version: 0 do
 
     # You should make sure that the column created is
     # long enough to store the required class names.
-    t.string :taggable_type
-    t.integer :taggable_id
+    #t.string :taggable_type
+    #t.integer :taggable_id
 
-    t.string :tagger_type
-    t.integer :tagger_id
+    #t.string :tagger_type
+    #t.integer :tagger_id
+
+		t.string :taggable_id
+		t.string :taggable_type, polymorphic: true
+		t.string :tagger_id
+		t.string :tagger_type, polymorphic: true
 
     # Limit is created to prevent MySQL error on index
     # length for MyISAM table type: http://bit.ly/vgW2Ql
@@ -78,6 +83,10 @@ ActiveRecord::Schema.define version: 0 do
     t.column :type, :string
   end
 
+  create_table :other_pk_models, force: true do |t|
+    t.column :name, :string
+    t.column :uuid, :string
+  end
 
   # Special cases for postgresql
   if using_postgresql?
